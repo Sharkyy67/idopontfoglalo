@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>Időpontfoglalás</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .slot {
+      padding: 10px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      width: 120px;
+      text-align: center;
+    }
+    .free { background-color: #b6fcb6; }
+    .booked { background-color: #ff8a8a; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+<h2>Időpontfoglalás</h2>
+
+<label for="date">Válassz napot:</label>
+<input type="date" id="date">
+
+<div id="slots"></div>
+
+<script>
+  // ENGEDÉLYEZETT NAPOK (YYYY-MM-DD formátum)
+  const allowedDates = [
+    "2026-01-10",
+    "2026-01-11",
+    "2026-01-15"
+  ];
+
+  const times = ["08:00", "09:00", "10:00", "11:00"]; 
+  const slotsDiv = document.getElementById("slots");
+  const dateInput = document.getElementById("date");
+
+  // Foglalások tárolása (böngészőben)
+  let bookings = JSON.parse(localStorage.getItem("bookings")) || {};
+
+  dateInput.addEventListener("change", () => {
+    const selectedDate = dateInput.value;
+    slotsDiv.innerHTML = "";
+
+    if (!allowedDates.includes(selectedDate)) {
+      slotsDiv.innerHTML = "<p>Erre a napra nem lehet foglalni.</p>";
+      return;
+    }
+
+    times.forEach(time => {
+      const key = selectedDate + "_" + time;
+      const div = document.createElement("div");
+      div.className = "slot " + (bookings[key] ? "booked" : "free");
+      div.innerText = time;
+
+      if (!bookings[key]) {
+        div.onclick = () => {
+          bookings[key] = true;
+          localStorage.setItem("bookings", JSON.stringify(bookings));
+          div.className = "slot booked";
+        };
+      }
+
+      slotsDiv.appendChild(div);
+    });
+  });
+</script>
+
+</body>
+</html>
