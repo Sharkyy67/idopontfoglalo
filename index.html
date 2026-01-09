@@ -2,65 +2,82 @@
 <html lang="hu">
 <head>
   <meta charset="UTF-8">
-  <title>Időpontfoglalás</title>
+  <title>Időpontfoglalás – 2026</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     .slot {
       padding: 10px;
-      margin: 5px 0;
+      margin: 6px 0;
       border: 1px solid #ccc;
       cursor: pointer;
-      width: 120px;
-      text-align: center;
+      width: 220px;
     }
     .free { background-color: #b6fcb6; }
     .booked { background-color: #ff8a8a; cursor: not-allowed; }
+    .names { font-size: 0.85em; margin-top: 5px; }
   </style>
 </head>
 <body>
 
-<h2>Időpontfoglalás</h2>
+<h2>Időpontfoglalás – 2026</h2>
 
-<label for="date">Válassz napot:</label>
-<input type="date" id="date">
+<label>Dátum:</label>
+<input type="date" id="date" min="2026-01-01" max="2026-12-31">
 
 <div id="slots"></div>
 
 <script>
-  // ENGEDÉLYEZETT NAPOK (YYYY-MM-DD formátum)
-  const allowedDates = [
-    "2026-01-10",
-    "2026-01-11",
-    "2026-01-15"
-  ];
+  const rules = {
+    1: ["08:00", "09:00", "18:00", "19:00"], // hétfő
+    3: ["08:00", "09:00", "18:00", "19:00"], // szerda
+    5: ["18:00", "19:00"],                   // péntek
+    0: ["19:00"]                              // vasárnap
+  };
 
-  const times = ["08:00", "09:00", "10:00", "11:00"]; 
+  const MAX = 3;
   const slotsDiv = document.getElementById("slots");
   const dateInput = document.getElementById("date");
 
-  // Foglalások tárolása (böngészőben)
   let bookings = JSON.parse(localStorage.getItem("bookings")) || {};
 
   dateInput.addEventListener("change", () => {
-    const selectedDate = dateInput.value;
+    const date = dateInput.value;
     slotsDiv.innerHTML = "";
 
-    if (!allowedDates.includes(selectedDate)) {
-      slotsDiv.innerHTML = "<p>Erre a napra nem lehet foglalni.</p>";
+    if (!date.startsWith("2026")) {
+      slotsDiv.innerHTML = "<p>Csak 2026-os dátum választható.</p>";
+      return;
+    }
+
+    const day = new Date(date).getDay();
+    const times = rules[day];
+
+    if (!times) {
+      slotsDiv.innerHTML = "<p>Ezen a napon nincs foglalás.</p>";
       return;
     }
 
     times.forEach(time => {
-      const key = selectedDate + "_" + time;
-      const div = document.createElement("div");
-      div.className = "slot " + (bookings[key] ? "booked" : "free");
-      div.innerText = time;
+      const key = date + "_" + time;
+      if (!bookings[key]) bookings[key] = [];
 
-      if (!bookings[key]) {
+      const div = document.createElement("div");
+      div.className = "slot " + (bookings[key].length >= MAX ? "booked" : "free");
+      div.innerHTML = `<strong>${time}</strong> (${bookings[key].length}/${MAX})`;
+
+      const namesDiv = document.createElement("div");
+      namesDiv.className = "names";
+      namesDiv.innerText = bookings[key].join(", ");
+      div.appendChild(namesDiv);
+
+      if (bookings[key].length < MAX) {
         div.onclick = () => {
-          bookings[key] = true;
+          const name = prompt("Add meg a neved:");
+          if (!name) return;
+
+          bookings[key].push(name);
           localStorage.setItem("bookings", JSON.stringify(bookings));
-          div.className = "slot booked";
+          dateInput.dispatchEvent(new Event("change"));
         };
       }
 
@@ -70,4 +87,6 @@
 </script>
 
 </body>
+</html>
+
 </html>
